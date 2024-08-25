@@ -111,7 +111,7 @@ export class EventController {
 
       const pdfBuffer = await this.pdfService.generateEventPDF(event);
 
-      res.setHeader('Content-Disposition', inline; filename="event_${event.id}.pdf");
+      res.setHeader('Content-Disposition', `inline; filename="event_${event.id}.pdf"`);
       res.contentType('application/pdf');
       res.send(pdfBuffer);
     } catch (error) {
@@ -119,4 +119,6 @@ export class EventController {
       res.status(500).json({ message: 'Failed to generate PDF' });
     }
   }
+
+
 }
