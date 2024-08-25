@@ -1,9 +1,6 @@
 import { Request, Response } from 'express';
 import { EventService } from '../services/EventService';
-import fs from 'fs';
 import { PDFService } from '../services/PDFService';
-import { Event as EventEntity } from '../entities/Event';
-
 
 export class EventController {
   private eventService: EventService;
@@ -30,7 +27,7 @@ export class EventController {
 
       return res.status(500).json({
         message: 'Failed to create event',
-        error: 'error occurred while creating the event...'
+        error: 'Error occurred while creating the event...'
       });
     }
   }
@@ -55,7 +52,7 @@ export class EventController {
 
       return res.status(500).json({
         message: 'Failed to update event',
-        error: 'error occurred while updating the event.'
+        error: 'Error occurred while updating the event.'
       });
     }
   }
@@ -63,22 +60,26 @@ export class EventController {
   public async deleteEvent(req: Request, res: Response): Promise<Response> {
     const { id } = req.params;
     try {
-      await this.eventService.deleteEvent(parseInt(id));
-      return res.status(204).send({"error":"deleted success"});
+        const eventId = parseInt(id);
+
+        // Delete the event, including associated sessions and participants
+        await this.eventService.deleteEvent(eventId);
+
+        return res.status(204).json({ msg: "Event and associated data deleted successfully" });
     } catch (error: any) {
-      console.error('Error deleting event:', error);
+        console.error('Error deleting event and sessions:', error);
 
-      if (error.code === '23503') { // Foreign key violation
-        return res.status(400).json({
-          message: 'Failed to delete event',
-          error: 'Some error occured'
+        if (error.code === '23503') { // Foreign key violation
+            return res.status(400).json({
+                message: 'Cannot delete event',
+                error: 'This event is associated with other data. Please try again.'
+            });
+        }
+
+        return res.status(500).json({
+            message: 'Failed to delete event',
+            error: 'An unexpected error occurred while deleting the event and its associated data'
         });
-      }
-
-      return res.status(500).json({
-        message: 'Failed to delete event',
-        error: 'Error occurred while deleting the event'
-      });
     }
   }
 
@@ -94,7 +95,7 @@ export class EventController {
       console.error('Error retrieving event:', error);
       return res.status(500).json({
         message: 'Failed to retrieve event',
-        error: 'error occurred while retrieving the event'
+        error: 'Error occurred while retrieving the event'
       });
     }
   }
@@ -110,7 +111,7 @@ export class EventController {
 
       const pdfBuffer = await this.pdfService.generateEventPDF(event);
 
-      res.setHeader('Content-Disposition', `inline; filename="event_${event.id}.pdf"`);
+      res.setHeader('Content-Disposition', inline; filename="event_${event.id}.pdf");
       res.contentType('application/pdf');
       res.send(pdfBuffer);
     } catch (error) {
@@ -118,5 +119,4 @@ export class EventController {
       res.status(500).json({ message: 'Failed to generate PDF' });
     }
   }
-
 }
